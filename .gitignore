@@ -1,0 +1,68 @@
+# SilentWitness - Exclude large binaries and dependencies
+
+# Python Environment
+Python/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.spec
+
+# FFmpeg
+ffmpeg/
+*.exe
+*.dll
+*.lib
+*.a
+*.dylib
+
+# Application Data
+Recordings/
+Logs/
+*.log
+*.mkv
+*.mp4
+*.avi
+*.mov
+
+# Configuration & Cache
+*.ini.bak
+*.tmp
+*.temp
+*.cache
+*.pid
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+*.old
+
+# User-specific files
+keylog_output.txt
+*.keylog
+
+# Setup artifacts
+get-pip.py
+ffmpeg-release-essentials.zip
+python-3.12.0-embed-amd64.zip
