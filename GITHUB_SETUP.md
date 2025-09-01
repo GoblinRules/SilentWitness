@@ -176,4 +176,3 @@ silentwitness/
 ---
 
 **Note:** This setup script downloads official binaries from trusted sources. Always verify the integrity of downloaded files and ensure compliance with local laws and regulations.
-

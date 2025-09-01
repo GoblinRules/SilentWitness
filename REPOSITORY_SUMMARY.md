@@ -61,7 +61,7 @@ irm https://raw.githubusercontent.com/GoblinRules/silentwitness/main/install_sil
 
 ### **Option 2: Traditional Setup**
 ```bash
-git clone https://github.com/GoblinRules/silentwitness.git
+git clone https://github.com/yourusername/silentwitness.git
 cd silentwitness
 .\setup_silentwitness.bat
 ```
@@ -105,4 +105,3 @@ cd silentwitness
 ---
 
 **Note**: This repository is designed for legitimate monitoring purposes. Users must ensure compliance with local laws and privacy regulations.
-
