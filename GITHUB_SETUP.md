@@ -15,7 +15,7 @@ This guide explains how to set up SilentWitness from the GitHub repository.
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/silentwitness.git
+   git clone https://github.com/GoblinRules/silentwitness.git
    cd silentwitness
    ```
 
@@ -176,3 +176,4 @@ silentwitness/
 ---
 
 **Note:** This setup script downloads official binaries from trusted sources. Always verify the integrity of downloaded files and ensure compliance with local laws and regulations.
+
