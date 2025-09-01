@@ -69,7 +69,7 @@ Edit `Scripts\config.ini` to customize:
 ### **Option 1: One-Liner Install (Easiest - No Cloning!)**
 ```powershell
 # Run this single command in PowerShell:
-irm https://raw.githubusercontent.com/yourusername/silentwitness/main/install_silentwitness.ps1 | iex
+irm https://raw.githubusercontent.com/GoblinRules/silentwitness/main/install_silentwitness.ps1 | iex
 ```
 
 **What happens:**
@@ -81,7 +81,7 @@ irm https://raw.githubusercontent.com/yourusername/silentwitness/main/install_si
 ### **Option 2: Traditional Setup (Clone First)**
 1. **Download the repository:**
    ```bash
-   git clone https://github.com/yourusername/silentwitness.git
+   git clone https://github.com/GoblinRules/silentwitness.git
    cd silentwitness
    ```
 
@@ -123,10 +123,10 @@ This project is licensed under a **Custom Non-Commercial License**.
 
 - ✅ **Personal & Educational Use**: Allowed freely
 - ❌ **Commercial Use**: Requires permission and licensing
-- 📧 **Contact**: [your-email@domain.com] for commercial inquiries
 
 See [LICENSE.md](LICENSE.md) for full terms and conditions.
 
 ## ⚠️ Note
 
 This tool is designed for legitimate monitoring purposes (documentation, debugging, etc.). Ensure compliance with local laws and privacy regulations.
+
