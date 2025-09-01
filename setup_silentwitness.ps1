@@ -136,6 +136,8 @@ function Install-PythonDependencies {
                 "pygame",
                 "pynput",
                 "configparser",
+                "tkinter-embed",
+                "setuptools",
                 "psutil"
             )
             
@@ -467,3 +469,4 @@ Write-ColorOutput ""
 Write-ColorOutput "See README.md for complete usage instructions" "Info"
 Write-ColorOutput ""
 Write-ColorOutput "Note: All files are now in $TOOLS_DIR - no need to clone the repository!" "Info"
+
