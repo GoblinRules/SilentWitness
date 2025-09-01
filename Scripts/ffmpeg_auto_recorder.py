@@ -1,5 +1,5 @@
 import sys
-sys.path.append(r"C:\Tools\OBS\Python\Lib\site-packages")
+sys.path.append(r"C:\Tools\SilentWitness\Python\Lib\site-packages")
 import os
 import subprocess
 import threading
@@ -40,7 +40,7 @@ RECORD_DURATION_STR = config.get('Recording', 'record_duration', fallback='01:00
 IDLE_THRESHOLD_STR = config.get('Recording', 'idle_threshold', fallback='00:10:00')
 CHECK_INTERVAL = config.getint('Recording', 'check_interval', fallback=10)
 FILENAME_TEMPLATE = config.get('Recording', 'filename_template', fallback='{username}-{timestamp}.mkv')
-RECORDING_DIR_BASE = config.get('Recording', 'recording_dir', fallback='C:\\Tools\\OBS\\Recordings')
+RECORDING_DIR_BASE = config.get('Recording', 'recording_dir', fallback='C:\\Tools\\SilentWitness\\Recordings')
 
 RECORD_DURATION = parse_hms(RECORD_DURATION_STR)
 IDLE_THRESHOLD_SECONDS = parse_hms(IDLE_THRESHOLD_STR)

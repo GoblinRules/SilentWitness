@@ -1,36 +1,50 @@
+# SilentWitness User Manual - Screen Recording & Keylogging Suite
 
-# 🎛️ User Manual: Keylogger + Recorder Suite
+## 🎯 Overview
 
----
+SilentWitness is a comprehensive Windows-based suite for automated screen recording and keystroke logging. It's designed for legitimate monitoring purposes such as:
 
-## 📦 Overview
+- **Documentation & Training** - Record software demonstrations
+- **Debugging & Support** - Capture user interactions for troubleshooting
+- **Compliance & Audit** - Maintain records of system usage
+- **Research & Analysis** - Study user behavior patterns
 
-This program is a modular suite of scripts designed for **silent monitoring and activity logging** on a Windows PC. It consists of:
+## ⚠️ Important Notice
 
-1. `ffmpeg_auto_recorder.py` – Automatically starts screen recording via FFmpeg based on activity or idle state.
-2. `recorder_status_gui.py` – GUI interface for controlling and monitoring the recorders.
-3. `keylogger.py` – Logs all keyboard input with timestamping, new line detection, and clipboard paste tracking.
-4. `config.ini` – Central configuration file for paths, filenames, and other settings.
-5. `ini_editor.py` – GUI tool to safely edit `config.ini`.
+**This tool is designed for legitimate monitoring purposes only. Users must ensure compliance with:**
+- Local privacy laws and regulations
+- Company policies and consent requirements
+- Ethical guidelines for monitoring
+- Data protection standards
 
----
+## 🚀 Quick Start
 
-## 🧠 Purpose
+### 1. **Run the main recorder:**
+```cmd
+cd C:\Tools\SilentWitness\Scripts
+python ffmpeg_auto_recorder.py
+```
 
-The system is built to:
-- Record screen activity silently for documentation, monitoring, or debugging.
-- Log all keyboard input naturally, mimicking how a user types.
-- Be persistent, recover gracefully, and require minimal manual intervention.
-- Allow granular control (start, stop, monitor, terminate) of each subcomponent.
+### 2. **Open the status GUI:**
+```cmd
+python recorder_status_gui.py
+```
 
----
+### 3. **Start keylogging:**
+```cmd
+python keylogger.py
+```
 
-## 🗂️ Script Details
+## 📋 Component Overview
 
 ### 1. `ffmpeg_auto_recorder.py`
-**Purpose**: Automatically record screen using FFmpeg based on idle time or always-on mode.
+**Purpose**: Main automation script that:
+- Starts/stops recording based on user activity
+- Manages FFmpeg processes
+- Handles idle detection
+- Provides system tray integration
 
-**Manual Kill Instructions**:
+**Manual Stop**:
 ```cmd
 taskkill /f /im python.exe
 ```
@@ -69,9 +83,9 @@ taskkill /f /im python.exe
 ## 🧪 Troubleshooting
 
 | Problem | Fix |
-|--------|-----|
+|---------|-----|
 | No recordings | Check FFmpeg path, permissions |
-| GUI won’t launch | Ensure Tkinter and GUI support |
+| GUI won't launch | Ensure Tkinter and GUI support |
 | Network path issue | Test path manually in Explorer |
 | Clipboard not captured | Check `pyperclip` installed and access allowed |
 
@@ -86,9 +100,40 @@ pip install pynput pyperclip psutil
 
 ---
 
+## 🏗️ Build Instructions
+
+### Setting up the Portable Python Environment:
+
+1. **Upgrade pip and install core dependencies:**
+   ```cmd
+   cd C:\Tools\SilentWitness\Python
+   python -m pip install --upgrade pip setuptools wheel
+   python -m pip install pyautogui pymsgbox pygetwindow pytweening pyscreeze pyrect pywin32
+   python -m pip install pystray
+   ```
+
+2. **Configure Python path file:**
+   Navigate to `C:\Tools\SilentWitness\Python` and edit `python312._pth`:
+   ```
+   python312.zip
+   .
+   
+   # Uncomment to run site.main() automatically
+   import site
+   Lib\site-packages
+   ```
+
+3. **Build executable (optional):**
+   ```cmd
+   cd C:\Tools\SilentWitness\Scripts
+   C:\Tools\SilentWitness\Python\Scripts\pyinstaller.exe ffmpeg_auto_recorder.spec
+   ```
+
+---
+
 ## 📁 Folder Layout
 ```
-C:\Tools\OBS\
+C:\Tools\SilentWitness\
 │
 ├── Scripts\
 │   ├── ffmpeg_auto_recorder.py
@@ -102,3 +147,79 @@ C:\Tools\OBS\
 ```
 
 ---
+
+## 🔧 Configuration
+
+### Key Settings in `config.ini`:
+
+**Paths Section:**
+- `ffmpeg_path` - Path to FFmpeg executable
+- `key_overlay_exe` - Path to key overlay application
+- `log_dir` - Directory for log files
+- `recording_dir` - Directory for video recordings
+
+**Recording Section:**
+- `record_duration` - Maximum recording length (HH:MM:SS)
+- `idle_threshold` - Time before stopping due to inactivity
+- `check_interval` - Seconds between idle checks
+- `enable_key_overlay` - Show key presses on screen
+- `enable_key_logging` - Log keystrokes to text files
+
+**Tray Section:**
+- `enable_tray_icon` - Show system tray icon
+- `icon_idle` - Icon when not recording
+- `icon_recording` - Icon when recording
+
+**Logging Section:**
+- `enable_logging` - Enable/disable logging
+- `log_to_file` - Write logs to files
+- `log_level` - Logging verbosity (DEBUG, INFO, WARNING, ERROR)
+
+---
+
+## 📊 Usage Examples
+
+### Basic Recording:
+```cmd
+cd C:\Tools\SilentWitness\Scripts
+python ffmpeg_auto_recorder.py
+```
+
+### Monitor Status:
+```cmd
+python recorder_status_gui.py
+```
+
+### Manual Keylogging:
+```cmd
+python keylogger.py output.txt
+```
+
+### Edit Configuration:
+```cmd
+python ini_editor.py
+```
+
+---
+
+## 🚨 Security Considerations
+
+1. **Access Control**: Ensure only authorized users can access the system
+2. **Data Protection**: Encrypt sensitive recordings and logs
+3. **Retention Policy**: Implement automatic cleanup of old files
+4. **Audit Trail**: Log all access and configuration changes
+5. **Consent**: Obtain proper consent before monitoring users
+
+---
+
+## 📞 Support
+
+For issues or questions:
+1. Check the troubleshooting section above
+2. Review log files in the Logs directory
+3. Verify all dependencies are installed
+4. Ensure proper file permissions
+
+---
+
+**Remember**: SilentWitness is a powerful tool. Use it responsibly and in accordance with all applicable laws and regulations.

@@ -1,5 +1,5 @@
 import sys
-sys.path.append(r"C:\Tools\OBS\Python\Lib\site-packages")
+sys.path.append(r"C:\Tools\SilentWitness\Python\Lib\site-packages")
 
 import os
 import subprocess
@@ -20,8 +20,8 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
 FILENAME_TEMPLATE = config.get('Recording', 'filename_template', fallback='{username}-{timestamp}.mkv')
-RECORDING_DIR_BASE = config.get('Recording', 'recording_dir', fallback='C:\\Tools\\OBS\\Recordings')
-FFPROBE_PATH = config.get('Recording', 'ffprobe_path', fallback='C:\\Tools\\OBS\\ffmpeg\\bin\\ffprobe.exe')
+RECORDING_DIR_BASE = config.get('Recording', 'recording_dir', fallback='C:\\Tools\\SilentWitness\\Recordings')
+FFPROBE_PATH = config.get('Recording', 'ffprobe_path', fallback='C:\\Tools\\SilentWitness\\ffmpeg\\bin\\ffprobe.exe')
 
 RECYCLE_FOLDER = "_RecycleBin"
 
@@ -98,96 +98,133 @@ def get_duration(file_path):
     except subprocess.CalledProcessError as e:
         log_to_console(f"[Duration Error] {file_path} → ffprobe returned {e.returncode}")
     except Exception as e:
-        log_to_console(f"[Duration Exception] {file_path}: {e}")
+        log_to_console(f"[Duration Error] {file_path} → {e}")
     return "N/A"
 
+def get_file_size(file_path):
+    try:
+        size_bytes = os.path.getsize(file_path)
+        return size_bytes / (1024 * 1024)  # Convert to MB
+    except Exception:
+        return 0
 
-def list_recordings(limit=None, query="", user_filter="All"):
+def get_recordings():
     recordings = []
-    root_dir = Path(RECORDING_DIR_BASE)
-    if not root_dir.exists():
-        return []
-    for vid in sorted(root_dir.rglob("*.mkv"), reverse=True):
-        if query.lower() not in str(vid.name).lower():
-            continue
-        stat = vid.stat()
-        user = re.match(r"(.+)-\d{8}-\d{6}\.mkv", vid.name)
-        user = user.group(1) if user else "unknown"
-        if user_filter != "All" and user_filter != user:
-            continue
-        recordings.append({
-            "datetime": datetime.fromtimestamp(stat.st_mtime),
-            "path": str(vid),
-            "user": user,
-            "size": stat.st_size / 1024 / 1024,
-            "duration": get_duration(vid)
-        })
-    if limit and limit.isdigit():
-        recordings = recordings[:int(limit)]
+    if not os.path.exists(RECORDING_DIR_BASE):
+        return recordings
+    
+    for root, dirs, files in os.walk(RECORDING_DIR_BASE):
+        for file in files:
+            if file.endswith('.mkv'):
+                file_path = os.path.join(root, file)
+                try:
+                    # Extract date and time from filename or use file modification time
+                    filename = os.path.basename(file)
+                    dt = datetime.fromtimestamp(os.path.getmtime(file_path))
+                    
+                    # Try to extract username from filename
+                    username_match = re.search(r'^([^-]+)-', filename)
+                    username = username_match.group(1) if username_match else "Unknown"
+                    
+                    recordings.append({
+                        'path': file_path,
+                        'filename': filename,
+                        'date': dt.strftime('%Y-%m-%d'),
+                        'time': dt.strftime('%H:%M:%S'),
+                        'duration': get_duration(file_path),
+                        'size': get_file_size(file_path),
+                        'user': username
+                    })
+                except Exception as e:
+                    log_to_console(f"Error processing {file}: {e}")
+    
+    # Sort by date/time, newest first
+    recordings.sort(key=lambda x: (x['date'], x['time']), reverse=True)
     return recordings
 
-def update_status():
-    processes = [
-        ("Recorder Encoder Status", "ffmpeg", "ffmpeg.exe"),
-        ("Recorder Tray Indicator Status", "ffmpeg_auto_recorder.py", None),
-        ("Overlay Status", "KeyOverlay", None),
-        ("Keylogger Status", "keylogger.py", None)
-    ]
+def open_file(file_path):
+    try:
+        os.startfile(file_path)
+        log_to_console(f"Opened: {os.path.basename(file_path)}")
+    except Exception as e:
+        log_to_console(f"Error opening {file_path}: {e}")
 
-    for name, keyword, exe in processes:
-        dot, txt, user_lbl = status_elements[name]
-        active = is_process_running(keyword, exe)
-        dot.config(text="●", foreground="green" if active else "red")
-        txt.config(text="Active" if active else "Not Active")
-        user_lbl.config(text=f"User: {get_process_user(keyword)}")
+def open_folder(file_path):
+    try:
+        folder = os.path.dirname(file_path)
+        os.startfile(folder)
+        log_to_console(f"Opened folder: {folder}")
+    except Exception as e:
+        log_to_console(f"Error opening folder: {e}")
 
-def auto_refresh_status():
-    while True:
-        update_status()
-        time.sleep(10)
+def delete_file(file_path):
+    try:
+        # Move to recycle folder instead of permanent deletion
+        recycle_dir = os.path.join(os.path.dirname(file_path), RECYCLE_FOLDER)
+        os.makedirs(recycle_dir, exist_ok=True)
+        
+        filename = os.path.basename(file_path)
+        recycle_path = os.path.join(recycle_dir, filename)
+        
+        # Add timestamp if file already exists
+        counter = 1
+        while os.path.exists(recycle_path):
+            name, ext = os.path.splitext(filename)
+            recycle_path = os.path.join(recycle_dir, f"{name}_{counter}{ext}")
+            counter += 1
+        
+        shutil.move(file_path, recycle_path)
+        log_to_console(f"Moved to recycle: {filename}")
+        refresh_recordings()
+    except Exception as e:
+        log_to_console(f"Error deleting {file_path}: {e}")
 
 def on_recording_click(event):
-    item = tree.identify_row(event.y)
+    item = tree.selection()[0]
+    file_path = tree.item(item, "tags")[0]
     col = tree.identify_column(event.x)
-    if not item or not col:
-        return
-    path = tree.item(item, "tags")[0]
-    if col == "#6":
-        folder = os.path.dirname(path)
-        if os.path.exists(folder):
-            subprocess.Popen(f'explorer "{folder}"')
-    elif col == "#7":
-        if os.path.exists(path):
-            os.startfile(path)
-    elif col == "#8":
-        keylog = path.replace(".mkv", ".txt")
-        if os.path.exists(keylog):
-            os.startfile(keylog)
-    elif col == "#9":
-        recycle_target = Path(RECORDING_DIR_BASE) / get_pc_name() / RECYCLE_FOLDER
-        recycle_target.mkdir(exist_ok=True)
-        try:
-            shutil.move(path, recycle_target / Path(path).name)
-            txt_path = path.replace(".mkv", ".txt")
-            if os.path.exists(txt_path):
-                shutil.move(txt_path, recycle_target / Path(txt_path).name)
-            refresh_recordings()
-            log_to_console(f"🗑 Moved {os.path.basename(path)} to recycle")
-        except Exception as e:
-            log_to_console(f"[Move Error] {e}")
+    
+    if col == "#6":  # Open folder
+        open_folder(file_path)
+    elif col == "#7":  # Play
+        open_file(file_path)
+    elif col == "#8":  # Keylog
+        keylog_path = file_path.replace(".mkv", ".txt")
+        if os.path.exists(keylog_path):
+            open_file(keylog_path)
+        else:
+            log_to_console("No keylog file found")
+    elif col == "#9":  # Delete
+        if tk.messagebox.askyesno("Confirm Delete", "Move to recycle bin?"):
+            delete_file(file_path)
 
 def refresh_recordings():
+    global tree
     tree.delete(*tree.get_children())
+    
+    recordings = get_recordings()
     limit = limit_var.get()
-    query = search_var.get()
-    selected_user = user_filter.get()
+    if limit != "All":
+        recordings = recordings[:int(limit)]
+    
+    search_term = search_var.get().lower()
+    user_filter_val = user_filter.get()
+    
     users = set()
-    for rec in list_recordings(limit, query, selected_user):
-        dt = rec["datetime"]
+    for rec in recordings:
+        # Apply search filter
+        if search_term and search_term not in rec['filename'].lower():
+            continue
+        
+        # Apply user filter
+        if user_filter_val != "All" and rec['user'] != user_filter_val:
+            continue
+        
         users.add(rec['user'])
+        
         tree.insert("", "end", values=[
-            dt.strftime("%Y-%m-%d"), dt.strftime("%H:%M:%S"),
-            f"{rec['duration']}", f"{rec['size']:.1f}MB", rec["user"],
+            rec['date'], rec['time'], rec['duration'], 
+            f"{rec['size']:.1f}MB", rec["user"],
             "📂", "▶", "📄", "🗑"
         ], tags=(rec["path"],))
     user_filter['values'] = ["All"] + sorted(users)
@@ -196,7 +233,7 @@ def build_gui():
     global tree, limit_var, search_var, user_filter, status_elements, log_console
 
     root = tk.Tk()
-    root.title("OBS Recorder Monitor")
+    root.title("SilentWitness Recorder Monitor")
     root.geometry("1100x650")
 
     notebook = ttk.Notebook(root)
@@ -263,7 +300,7 @@ def build_gui():
     limit_menu.pack(side="left", padx=5)
 
     ttk.Label(top_frame, text="Filter by User:").pack(side="left", padx=5)
-    user_filter = ttk.Combobox(top_frame, values=["All"], width=15)
+    user_filter = ttk.Combobox(values=["All"], width=15)
     user_filter.set("All")
     user_filter.pack(side="left", padx=5)
     user_filter.bind("<<ComboboxSelected>>", lambda e: refresh_recordings())
@@ -282,6 +319,39 @@ def build_gui():
     refresh_recordings()
     threading.Thread(target=auto_refresh_status, daemon=True).start()
     root.mainloop()
+
+def update_status():
+    for name, (dot, txt, user_lbl) in status_elements.items():
+        if name == "Recorder Encoder Status":
+            is_running = is_process_running("ffmpeg", "ffmpeg.exe")
+            dot.config(text="🟢" if is_running else "🔴")
+            txt.config(text="Running" if is_running else "Stopped")
+            user_lbl.config(text=f"User: {get_process_user('ffmpeg')}")
+        elif name == "Recorder Tray Indicator Status":
+            is_running = is_process_running("ffmpeg_auto_recorder.py")
+            dot.config(text="🟢" if is_running else "🔴")
+            txt.config(text="Running" if is_running else "Stopped")
+            user_lbl.config(text=f"User: {get_process_user('ffmpeg_auto_recorder.py')}")
+        elif name == "Overlay Status":
+            is_running = is_process_running("KeyOverlay")
+            dot.config(text="🟢" if is_running else "🔴")
+            txt.config(text="Running" if is_running else "Stopped")
+            user_lbl.config(text=f"User: {get_process_user('KeyOverlay')}")
+        elif name == "Keylogger Status":
+            is_running = is_process_running("keylogger.py")
+            dot.config(text="🟢" if is_running else "🔴")
+            txt.config(text="Running" if is_running else "Stopped")
+            user_lbl.config(text=f"User: {get_process_user('keylogger.py')}")
+
+def auto_refresh_status():
+    while True:
+        time.sleep(5)
+        try:
+            root = tk.Tk()
+            root.after(0, update_status)
+            root.destroy()
+        except:
+            pass
 
 if __name__ == "__main__":
     build_gui()
