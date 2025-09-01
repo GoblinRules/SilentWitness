@@ -69,23 +69,8 @@ function Download-File {
         Write-ColorOutput "Downloading $Description..." "Info"
         Write-ColorOutput "   URL: $Url" "Info"
         
-        # Show download progress
-        $progressParams = @{
-            Uri = $Url
-            OutFile = $OutputPath
-            UseBasicParsing = $true
-            ProgressAction = {
-                $percentComplete = $_.PercentComplete
-                if ($percentComplete -ge 0) {
-                    Write-Progress -Activity "Downloading $Description" -Status "$percentComplete% Complete" -PercentComplete $percentComplete
-                }
-            }
-        }
-        
-        Invoke-RestMethod @progressParams
-        
-        # Clear progress bar
-        Write-Progress -Activity "Downloading $Description" -Completed
+        # Download without progress bar for better compatibility
+        Invoke-RestMethod -Uri $Url -OutFile $OutputPath -UseBasicParsing
         
         if (Test-Path $OutputPath) {
             $fileSize = [math]::Round((Get-Item $OutputPath).Length / 1MB, 2)
