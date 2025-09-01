@@ -55,142 +55,55 @@ function Test-Admin {
     }
 }
 
-function Create-Directory {
-    param([string]$Path)
-    if (!(Test-Path $Path)) {
-        New-Item -ItemType Directory -Path $Path -Force | Out-Null
-        Write-ColorOutput "Created directory: $Path" "Success"
-    }
-}
-
-function Download-File {
-    param([string]$Url, [string]$OutputPath, [string]$Description)
-    
+function Test-SystemPython {
     try {
-        Write-ColorOutput "Downloading $Description..." "Info"
-        Write-ColorOutput "   URL: $Url" "Info"
-        
-        # Download without progress bar for better compatibility
-        Invoke-RestMethod -Uri $Url -OutFile $OutputPath -UseBasicParsing
-        
-        if (Test-Path $OutputPath) {
-            $fileSize = [math]::Round((Get-Item $OutputPath).Length / 1MB, 2)
-            Write-ColorOutput "Downloaded $Description successfully ($fileSize MB)" "Success"
-            return $true
+        # Try to find system Python
+        $pythonExe = Get-Command python -ErrorAction SilentlyContinue
+        if ($pythonExe) {
+            $pythonPath = $pythonExe.Source
+            Write-ColorOutput "Found system Python: $pythonPath" "Info"
+            
+            # Test if it has tkinter (required for GUI)
+            $tkinterTest = & python -c "import tkinter; print('tkinter available')" 2>$null
+            if ($tkinterTest -eq "tkinter available") {
+                Write-ColorOutput "System Python has tkinter support" "Success"
+                return $true
+            } else {
+                Write-ColorOutput "System Python found but missing tkinter" "Warning"
+                return $false
+            }
         } else {
-            Write-ColorOutput "Failed to download $Description" "Error"
+            Write-ColorOutput "No system Python found" "Warning"
             return $false
         }
     }
     catch {
-        Write-ColorOutput "Error downloading $Description - $($_.Exception.Message)" "Error"
+        Write-ColorOutput "Error testing system Python: $($_.Exception.Message)" "Warning"
         return $false
     }
 }
 
-function Extract-Archive {
-    param([string]$ArchivePath, [string]$Destination, [string]$Description)
-    
+function Install-SystemPythonDependencies {
     try {
-        Write-ColorOutput "Extracting $Description..." "Info"
+        Write-ColorOutput "Installing Python dependencies using system Python..." "Info"
         
-        # Use Expand-Archive for better compatibility
-        Expand-Archive -Path $ArchivePath -DestinationPath $Destination -Force
-        
-        Write-ColorOutput "Extracted $Description successfully" "Success"
-        return $true
-    }
-    catch {
-        Write-ColorOutput "Error extracting $Description - $($_.Exception.Message)" "Error"
-        return $false
-    }
-}
-
-function Install-PythonDependencies {
-    param([string]$PythonPath)
-    
-    try {
-        Write-ColorOutput "Installing Python dependencies..." "Info"
-        
-        # Download get-pip.py
-        $pipPath = Join-Path $TOOLS_DIR "get-pip.py"
-        if (Download-File -Url $PIP_URL -OutputPath $pipPath -Description "get-pip.py") {
-            
-            Write-ColorOutput "   Installing pip..." "Info"
-            & "$PythonPath\python.exe" $pipPath --no-warn-script-location --quiet
-            
-            # Install required packages
-            $requirements = @(
-                "pyautogui",
-                "pymsgbox", 
-                "pygetwindow",
-                "pytweening",
-                "pyscreeze",
-                "pyrect",
-                "pywin32",
-                "pyperclip",
-                "mouse",
-                "pystray",
-                "pillow",
-                "screeninfo",
-                "pygame",
-                "pynput",
-                "configparser",
-                "tkinter-embed",
-                "setuptools",
-                "psutil"
-            )
-            
-            $totalPackages = $requirements.Count
-            $currentPackage = 0
-            
-            foreach ($package in $requirements) {
-                $currentPackage++
-                Write-ColorOutput "   Installing package $currentPackage of $totalPackages - $package" "Info"
-                
-                # Show pip progress
-                $pipOutput = & "$PythonPath\python.exe" -m pip install $package --no-warn-script-location --quiet 2>&1
-                if ($LASTEXITCODE -eq 0) {
-                    Write-ColorOutput "     $package installed" "Success"
-                } else {
-                    Write-ColorOutput "     Warning: $package had issues" "Warning"
-                }
+        # Install required packages
+        $packages = @("psutil", "pynput", "pyperclip", "pystray", "pillow")
+        foreach ($package in $packages) {
+            Write-ColorOutput "   Installing $package..." "Info"
+            & python -m pip install $package --user 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                Write-ColorOutput "     ✓ $package installed" "Success"
+            } else {
+                Write-ColorOutput "     ⚠ $package had issues" "Warning"
             }
-            
-            Write-ColorOutput "Python dependencies installation completed" "Success"
-            return $true
         }
-    }
-    catch {
-        Write-ColorOutput "Error installing Python dependencies - $($_.Exception.Message)" "Error"
-        return $false
-    }
-}
-
-function Configure-PythonPath {
-    param([string]$PythonPath)
-    
-    try {
-        Write-ColorOutput "Configuring Python path..." "Info"
         
-        # Create python312._pth file
-        $pthContent = @"
-python312.zip
-.
-
-# Uncomment to run site.main() automatically
-import site
-Lib\site-packages
-"@
-        
-        $pthPath = Join-Path $PythonPath "python312._pth"
-        $pthContent | Out-File -FilePath $pthPath -Encoding ASCII
-        
-        Write-ColorOutput "Python path configured successfully" "Success"
+        Write-ColorOutput "System Python dependencies installed" "Success"
         return $true
     }
     catch {
-        Write-ColorOutput "Error configuring Python path - $($_.Exception.Message)" "Error"
+        Write-ColorOutput "Error installing system Python dependencies: $($_.Exception.Message)" "Error"
         return $false
     }
 }
@@ -262,25 +175,168 @@ function Download-Repository {
     }
 }
 
-# Main execution
-try {
-    Write-ColorOutput "SilentWitness Setup Script" "Info"
-    Write-ColorOutput "================================" "Info"
-} catch {
-    Write-Host "SilentWitness Setup Script"
-    Write-Host "================================"
+function Create-Directory {
+    param([string]$Path)
+    if (!(Test-Path $Path)) {
+        New-Item -ItemType Directory -Path $Path -Force | Out-Null
+        Write-ColorOutput "Created directory: $Path" "Success"
+    }
 }
 
-# Check if running as administrator
-try {
-    if (!(Test-Admin)) {
-        Write-ColorOutput "Warning: Not running as administrator. Some operations may fail." "Warning"
-        Write-ColorOutput "   Consider running PowerShell as Administrator for best results." "Warning"
-        Write-ColorOutput ""
+function Download-File {
+    param([string]$Url, [string]$OutputPath, [string]$Description)
+    
+    try {
+        Write-ColorOutput "📥 Downloading $Description..." "Info"
+        Write-ColorOutput "   URL: $Url" "Info"
+        
+        # Show download progress
+        $progressParams = @{
+            Uri = $Url
+            OutFile = $OutputPath
+            UseBasicParsing = $true
+            ProgressAction = {
+                $percentComplete = $_.PercentComplete
+                if ($percentComplete -ge 0) {
+                    Write-Progress -Activity "Downloading $Description" -Status "$percentComplete% Complete" -PercentComplete $percentComplete
+                }
+            }
+        }
+        
+        Invoke-RestMethod @progressParams
+        
+        # Clear progress bar
+        Write-Progress -Activity "Downloading $Description" -Completed
+        
+        if (Test-Path $OutputPath) {
+            $fileSize = [math]::Round((Get-Item $OutputPath).Length / 1MB, 2)
+            Write-ColorOutput "✓ Downloaded $Description successfully ($fileSize MB)" "Success"
+            return $true
+        } else {
+            Write-ColorOutput "✗ Failed to download $Description" "Error"
+            return $false
+        }
     }
-} catch {
-    Write-Host "Warning: Could not determine administrator status. Some operations may fail."
-    Write-Host ""
+    catch {
+        Write-ColorOutput "✗ Error downloading $Description`: $($_.Exception.Message)" "Error"
+        return $false
+    }
+}
+
+function Extract-Archive {
+    param([string]$ArchivePath, [string]$Destination, [string]$Description)
+    
+    try {
+        Write-ColorOutput "Extracting $Description..." "Info"
+        
+        # Use Expand-Archive for better compatibility
+        Expand-Archive -Path $ArchivePath -DestinationPath $Destination -Force
+        
+        Write-ColorOutput "✓ Extracted $Description successfully" "Success"
+        return $true
+    }
+    catch {
+        Write-ColorOutput "✗ Error extracting $Description`: $($_.Exception.Message)" "Error"
+        return $false
+    }
+}
+
+function Install-PythonDependencies {
+    param([string]$PythonPath)
+    
+    try {
+        Write-ColorOutput "🐍 Installing Python dependencies..." "Info"
+        
+        # Download get-pip.py
+        $pipPath = Join-Path $TOOLS_DIR "get-pip.py"
+        if (Download-File -Url $PIP_URL -OutputPath $pipPath -Description "get-pip.py") {
+            
+            Write-ColorOutput "   Installing pip..." "Info"
+            & "$PythonPath\python.exe" $pipPath --no-warn-script-location --quiet
+            
+            # Install required packages
+            $requirements = @(
+                "pyautogui",
+                "pymsgbox", 
+                "pygetwindow",
+                "pytweening",
+                "pyscreeze",
+                "pyrect",
+                "pywin32",
+                "pyperclip",
+                "mouse",
+                "pystray",
+                "pillow",
+                "screeninfo",
+                "pygame",
+                "pynput",
+                "configparser",
+                "psutil"
+            )
+            
+            $totalPackages = $requirements.Count
+            $currentPackage = 0
+            
+            foreach ($package in $requirements) {
+                $currentPackage++
+                Write-ColorOutput "   Installing package $currentPackage of $totalPackages - $package" "Info"
+                
+                # Show pip progress
+                $pipOutput = & "$PythonPath\python.exe" -m pip install $package --no-warn-script-location --quiet 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    Write-ColorOutput "     ✓ $package installed" "Success"
+                } else {
+                    Write-ColorOutput "     Warning: $package had issues" "Warning"
+                }
+            }
+            
+            Write-ColorOutput "✓ Python dependencies installation completed" "Success"
+            return $true
+        }
+    }
+    catch {
+        Write-ColorOutput "✗ Error installing Python dependencies: $($_.Exception.Message)" "Error"
+        return $false
+    }
+}
+
+function Configure-PythonPath {
+    param([string]$PythonPath)
+    
+    try {
+        Write-ColorOutput "Configuring Python path..." "Info"
+        
+        # Create python312._pth file
+        $pthContent = @"
+python312.zip
+.
+
+# Uncomment to run site.main() automatically
+import site
+Lib\site-packages
+"@
+        
+        $pthPath = Join-Path $PythonPath "python312._pth"
+        $pthContent | Out-File -FilePath $pthPath -Encoding ASCII
+        
+        Write-ColorOutput "✓ Python path configured successfully" "Success"
+        return $true
+    }
+    catch {
+        Write-ColorOutput "✗ Error configuring Python path: $($_.Exception.Message)" "Error"
+        return $false
+    }
+}
+
+# Main execution
+Write-ColorOutput "🎥 SilentWitness Setup Script" "Info"
+Write-ColorOutput "================================" "Info"
+
+# Check if running as administrator
+if (!(Test-Admin)) {
+    Write-ColorOutput "⚠️  Warning: Not running as administrator. Some operations may fail." "Warning"
+    Write-ColorOutput "   Consider running PowerShell as Administrator for best results." "Warning"
+    Write-ColorOutput ""
 }
 
 # Create main directory only
@@ -338,7 +394,7 @@ Create-Directory "$TOOLS_DIR\Logs"
 # Download and setup FFmpeg
 if (!$SkipFFmpeg) {
     Write-ColorOutput ""
-    Write-ColorOutput "Setting up FFmpeg..." "Info"
+    Write-ColorOutput "📹 Setting up FFmpeg..." "Info"
     
     $ffmpegZip = Join-Path $TOOLS_DIR "ffmpeg-release-essentials.zip"
     
@@ -353,17 +409,36 @@ if (!$SkipFFmpeg) {
             
             # Clean up zip file
             Remove-Item $ffmpegZip -Force
-            Write-ColorOutput "FFmpeg setup completed successfully" "Success"
+            Write-ColorOutput "✓ FFmpeg setup completed successfully" "Success"
         }
     }
 } else {
-    Write-ColorOutput "Skipping FFmpeg setup" "Warning"
+    Write-ColorOutput "⏭️  Skipping FFmpeg setup" "Warning"
 }
 
-# Download and setup Python
-if (!$SkipPython) {
+# Check for system Python first
+Write-ColorOutput ""
+Write-ColorOutput "🐍 Checking Python availability..." "Info"
+
+if (Test-SystemPython) {
+    Write-ColorOutput "✓ Using system Python (has tkinter support)" "Success"
+    
+    # Install dependencies for system Python
+    if (Install-SystemPythonDependencies) {
+        Write-ColorOutput "✓ System Python setup completed successfully" "Success"
+    } else {
+        Write-ColorOutput "⚠️  System Python dependencies had issues - falling back to embedded Python" "Warning"
+        $useEmbeddedPython = $true
+    }
+} else {
+    Write-ColorOutput "⚠️  No suitable system Python found - will use embedded Python" "Warning"
+    $useEmbeddedPython = $true
+}
+
+# Download and setup embedded Python only if needed
+if ($useEmbeddedPython -and !$SkipPython) {
     Write-ColorOutput ""
-    Write-ColorOutput "Setting up Python..." "Info"
+    Write-ColorOutput "🐍 Setting up embedded Python..." "Info"
     
     $pythonZip = Join-Path $TOOLS_DIR "python-3.12.0-embed-amd64.zip"
     
@@ -377,11 +452,11 @@ if (!$SkipPython) {
                 Install-PythonDependencies "$TOOLS_DIR\Python"
             }
             
-            Write-ColorOutput "Python setup completed successfully" "Success"
+            Write-ColorOutput "✓ Embedded Python setup completed successfully" "Success"
         }
     }
-} else {
-    Write-ColorOutput "Skipping Python setup" "Warning"
+} elseif ($SkipPython) {
+    Write-ColorOutput "⏭️  Skipping Python setup" "Warning"
 }
 
 # Verify repository content
@@ -427,7 +502,7 @@ Get-ChildItem $TOOLS_DIR | ForEach-Object {
 
 # Final configuration
 Write-ColorOutput ""
-Write-ColorOutput "Final configuration..." "Info"
+Write-ColorOutput "🔧 Final configuration..." "Info"
 
 # Update config.ini paths if it exists
 $configPath = Join-Path $TOOLS_DIR "Scripts\config.ini"
@@ -439,7 +514,7 @@ if (Test-Path $configPath) {
     $configContent = $configContent -replace "C:\\Tools\\OBS", "C:\Tools\SilentWitness"
     $configContent | Out-File $configPath -Encoding UTF8
     
-    Write-ColorOutput "Configuration updated successfully" "Success"
+    Write-ColorOutput "✓ Configuration updated successfully" "Success"
 } else {
     Write-ColorOutput "Configuration file not found - repository may not have downloaded correctly" "Warning"
 }
@@ -453,20 +528,35 @@ Write-ColorOutput "  2. Or use: python Scripts\startup_manager.py --help" "Info"
 Write-ColorOutput "  3. Or double-click: Scripts\manage_startup.bat" "Info"
 
 Write-ColorOutput ""
-Write-ColorOutput "SilentWitness setup completed!" "Success"
+Write-ColorOutput "🎉 SilentWitness setup completed!" "Success"
 Write-ColorOutput ""
-Write-ColorOutput "Installation directory: $TOOLS_DIR" "Info"
-Write-ColorOutput "To start using SilentWitness:" "Info"
+Write-ColorOutput "📁 Installation directory: $TOOLS_DIR" "Info"
+Write-ColorOutput "🚀 To start using SilentWitness:" "Info"
 Write-ColorOutput "   1. cd $TOOLS_DIR\Scripts" "Info"
 Write-ColorOutput "   2. python ffmpeg_auto_recorder.py" "Info"
 Write-ColorOutput ""
 Write-ColorOutput "What was installed:" "Info"
 Write-ColorOutput "   ✓ FFmpeg for video recording" "Success"
-Write-ColorOutput "   ✓ Python 3.12 with all dependencies" "Success"
+if (Test-SystemPython) {
+    Write-ColorOutput "   ✓ System Python with tkinter support" "Success"
+} else {
+    Write-ColorOutput "   ✓ Embedded Python 3.12 with all dependencies" "Success"
+}
 Write-ColorOutput "   ✓ SilentWitness application files" "Success"
 Write-ColorOutput "   ✓ Configuration and documentation" "Success"
 Write-ColorOutput ""
-Write-ColorOutput "See README.md for complete usage instructions" "Info"
+Write-ColorOutput "📚 See README.md for complete usage instructions" "Info"
 Write-ColorOutput ""
 Write-ColorOutput "Note: All files are now in $TOOLS_DIR - no need to clone the repository!" "Info"
 
+Write-ColorOutput ""
+Write-ColorOutput "🎉 SilentWitness setup completed!" "Success"
+Write-ColorOutput ""
+Write-ColorOutput "📁 Installation directory: $TOOLS_DIR" "Info"
+Write-ColorOutput "🚀 To start using SilentWitness:" "Info"
+Write-ColorOutput "   1. cd $TOOLS_DIR\Scripts" "Info"
+Write-ColorOutput "   2. python ffmpeg_auto_recorder.py" "Info"
+Write-ColorOutput ""
+Write-ColorOutput "📚 See README.md for complete usage instructions" "Info"
+Write-ColorOutput ""
+Write-ColorOutput "⚠️  Note: Ensure all paths in config.ini are correct for your system" "Warning"
