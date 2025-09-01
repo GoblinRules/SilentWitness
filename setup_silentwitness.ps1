@@ -222,17 +222,26 @@ function Download-Repository {
             # Move contents from extracted folder to main directory
             $extractedFolder = Join-Path $extractPath "silentwitness-main"
             if (Test-Path $extractedFolder) {
-                # Copy all files and folders except .git
-                Get-ChildItem $extractedFolder | Where-Object { $_.Name -ne ".git" } | ForEach-Object {
-                    $targetPath = Join-Path $OutputPath $_.Name
-                    if ($_.PSIsContainer) {
-                        Copy-Item $_.FullName -Destination $targetPath -Recurse -Force
+                Write-ColorOutput "   Extracted folder found: $extractedFolder" "Info"
+                
+                # Copy all files and folders except .git directly to target
+                $items = Get-ChildItem $extractedFolder | Where-Object { $_.Name -ne ".git" }
+                Write-ColorOutput "   Found $($items.Count) items to copy:" "Info"
+                
+                foreach ($item in $items) {
+                    $targetPath = Join-Path $OutputPath $item.Name
+                    Write-ColorOutput "     Copying $($item.Name) to $targetPath" "Info"
+                    
+                    if ($item.PSIsContainer) {
+                        Copy-Item $item.FullName -Destination $targetPath -Recurse -Force
                     } else {
-                        Copy-Item $_.FullName -Destination $targetPath -Force
+                        Copy-Item $item.FullName -Destination $targetPath -Force
                     }
                 }
                 
                 Write-ColorOutput "Repository content extracted successfully" "Success"
+            } else {
+                Write-ColorOutput "   Error: Extracted folder not found at $extractedFolder" "Error"
             }
             
             # Clean up
@@ -272,20 +281,24 @@ try {
     Write-Host ""
 }
 
-# Create main directory structure
-Write-ColorOutput "Creating directory structure..." "Info"
+# Create main directory only
+Write-ColorOutput "Creating main directory..." "Info"
 Create-Directory $TOOLS_DIR
-Create-Directory "$TOOLS_DIR\Scripts"
-Create-Directory "$TOOLS_DIR\ffmpeg"
-Create-Directory "$TOOLS_DIR\Python"
-Create-Directory "$TOOLS_DIR\Recordings"
-Create-Directory "$TOOLS_DIR\Logs"
-Create-Directory "$TOOLS_DIR\Startup\Recorder"
 
 # Download and extract repository content
 Write-ColorOutput ""
 Write-ColorOutput "Downloading SilentWitness application..." "Info"
 Write-ColorOutput "   This will download all scripts, configuration, and documentation" "Info"
+
+# Clean up any existing directories that might conflict
+$conflictingDirs = @("Scripts", "User Guide", "Startup", "README.md", "LICENSE.md")
+foreach ($dir in $conflictingDirs) {
+    $conflictPath = Join-Path $TOOLS_DIR $dir
+    if (Test-Path $conflictPath) {
+        Write-ColorOutput "   Removing existing $dir to avoid conflicts..." "Warning"
+        Remove-Item $conflictPath -Recurse -Force
+    }
+}
 
 $downloadSuccess = $false
 $retryCount = 0
@@ -311,6 +324,14 @@ while (-not $downloadSuccess -and $retryCount -lt $maxRetries) {
         }
     }
 }
+
+# Create additional directories needed by the application
+Write-ColorOutput ""
+Write-ColorOutput "Creating application directories..." "Info"
+Create-Directory "$TOOLS_DIR\ffmpeg"
+Create-Directory "$TOOLS_DIR\Python"
+Create-Directory "$TOOLS_DIR\Recordings"
+Create-Directory "$TOOLS_DIR\Logs"
 
 # Download and setup FFmpeg
 if (!$SkipFFmpeg) {
@@ -388,6 +409,18 @@ if ($missingFiles.Count -eq 0) {
     Write-ColorOutput "All required files are present" "Success"
 } else {
     Write-ColorOutput "Warning: Some files are missing - installation may be incomplete" "Warning"
+}
+
+# Show final directory structure
+Write-ColorOutput ""
+Write-ColorOutput "Final directory structure:" "Info"
+Get-ChildItem $TOOLS_DIR | ForEach-Object {
+    if ($_.PSIsContainer) {
+        $itemCount = (Get-ChildItem $_.FullName -Recurse | Measure-Object).Count
+        Write-ColorOutput "   📁 $($_.Name) ($itemCount items)" "Success"
+    } else {
+        Write-ColorOutput "   📄 $($_.Name)" "Success"
+    }
 }
 
 # Final configuration
