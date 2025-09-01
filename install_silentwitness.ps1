@@ -1,12 +1,12 @@
 # SilentWitness One-Liner Installer
-# Usage: irm https://raw.githubusercontent.com/yourusername/silentwitness/main/install_silentwitness.ps1 | iex
+# Usage: irm https://raw.githubusercontent.com/GoblinRules/silentwitness/main/install_silentwitness.ps1 | iex
 
 Write-Host "🎥 SilentWitness One-Click Installer" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Download and execute the main setup script
-$setupScriptUrl = "https://raw.githubusercontent.com/yourusername/silentwitness/main/setup_silentwitness.ps1"
+$setupScriptUrl = "https://raw.githubusercontent.com/GoblinRules/silentwitness/main/setup_silentwitness.ps1"
 
 Write-Host "📥 Downloading SilentWitness setup script..." -ForegroundColor Yellow
 Write-Host "   URL: $setupScriptUrl" -ForegroundColor Gray
@@ -25,3 +25,4 @@ try {
     Write-Host ""
     Write-Host "💡 Alternative: Clone the repository and run setup_silentwitness.bat" -ForegroundColor Yellow
 }
+
