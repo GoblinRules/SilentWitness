@@ -16,6 +16,7 @@ $TOOLS_DIR = "C:\Tools\SilentWitness"
 $FFMPEG_URL = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
 $PYTHON_URL = "https://www.python.org/ftp/python/3.12.0/python-3.12.0-embed-amd64.zip"
 $PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
+$REPO_URL = "https://github.com/GoblinRules/silentwitness/archive/refs/heads/main.zip"
 
 # Colors for output
 $Colors = @{
@@ -192,6 +193,64 @@ Lib\site-packages
     }
 }
 
+function Download-Repository {
+    param([string]$OutputPath)
+    
+    try {
+        Write-ColorOutput "Downloading SilentWitness repository..." "Info"
+        Write-ColorOutput "   URL: $REPO_URL" "Info"
+        
+        $repoZip = Join-Path $OutputPath "silentwitness-main.zip"
+        
+        # Download repository
+        Invoke-RestMethod -Uri $REPO_URL -OutFile $repoZip -UseBasicParsing
+        
+        if (Test-Path $repoZip) {
+            $fileSize = [math]::Round((Get-Item $repoZip).Length / 1MB, 2)
+            Write-ColorOutput "Downloaded repository successfully ($fileSize MB)" "Success"
+            
+            # Extract repository
+            Write-ColorOutput "Extracting repository..." "Info"
+            $extractPath = Join-Path $OutputPath "temp_extract"
+            
+            if (Test-Path $extractPath) {
+                Remove-Item $extractPath -Recurse -Force
+            }
+            
+            Expand-Archive -Path $repoZip -DestinationPath $extractPath -Force
+            
+            # Move contents from extracted folder to main directory
+            $extractedFolder = Join-Path $extractPath "silentwitness-main"
+            if (Test-Path $extractedFolder) {
+                # Copy all files and folders except .git
+                Get-ChildItem $extractedFolder | Where-Object { $_.Name -ne ".git" } | ForEach-Object {
+                    $targetPath = Join-Path $OutputPath $_.Name
+                    if ($_.PSIsContainer) {
+                        Copy-Item $_.FullName -Destination $targetPath -Recurse -Force
+                    } else {
+                        Copy-Item $_.FullName -Destination $targetPath -Force
+                    }
+                }
+                
+                Write-ColorOutput "Repository content extracted successfully" "Success"
+            }
+            
+            # Clean up
+            Remove-Item $extractPath -Recurse -Force
+            Remove-Item $repoZip -Force
+            
+            return $true
+        } else {
+            Write-ColorOutput "Failed to download repository" "Error"
+            return $false
+        }
+    }
+    catch {
+        Write-ColorOutput "Error downloading repository - $($_.Exception.Message)" "Error"
+        return $false
+    }
+}
+
 # Main execution
 try {
     Write-ColorOutput "SilentWitness Setup Script" "Info"
@@ -222,6 +281,36 @@ Create-Directory "$TOOLS_DIR\Python"
 Create-Directory "$TOOLS_DIR\Recordings"
 Create-Directory "$TOOLS_DIR\Logs"
 Create-Directory "$TOOLS_DIR\Startup\Recorder"
+
+# Download and extract repository content
+Write-ColorOutput ""
+Write-ColorOutput "Downloading SilentWitness application..." "Info"
+Write-ColorOutput "   This will download all scripts, configuration, and documentation" "Info"
+
+$downloadSuccess = $false
+$retryCount = 0
+$maxRetries = 3
+
+while (-not $downloadSuccess -and $retryCount -lt $maxRetries) {
+    if ($retryCount -gt 0) {
+        Write-ColorOutput "Retry attempt $retryCount of $maxRetries..." "Warning"
+    }
+    
+    if (Download-Repository $TOOLS_DIR) {
+        Write-ColorOutput "SilentWitness application downloaded successfully" "Success"
+        $downloadSuccess = $true
+    } else {
+        $retryCount++
+        if ($retryCount -lt $maxRetries) {
+            Write-ColorOutput "Download failed, retrying in 5 seconds..." "Warning"
+            Start-Sleep -Seconds 5
+        } else {
+            Write-ColorOutput "Failed to download application files after $maxRetries attempts" "Error"
+            Write-ColorOutput "   You may need to manually copy the repository files" "Warning"
+            Write-ColorOutput "   Or check your internet connection and try again" "Warning"
+        }
+    }
+}
 
 # Download and setup FFmpeg
 if (!$SkipFFmpeg) {
@@ -272,6 +361,35 @@ if (!$SkipPython) {
     Write-ColorOutput "Skipping Python setup" "Warning"
 }
 
+# Verify repository content
+Write-ColorOutput ""
+Write-ColorOutput "Verifying installation..." "Info"
+
+$requiredFiles = @(
+    "Scripts\ffmpeg_auto_recorder.py",
+    "Scripts\recorder_status_gui.py",
+    "Scripts\config.ini",
+    "README.md",
+    "LICENSE.md"
+)
+
+$missingFiles = @()
+foreach ($file in $requiredFiles) {
+    $filePath = Join-Path $TOOLS_DIR $file
+    if (Test-Path $filePath) {
+        Write-ColorOutput "   ✓ $file" "Success"
+    } else {
+        Write-ColorOutput "   ✗ $file (missing)" "Error"
+        $missingFiles += $file
+    }
+}
+
+if ($missingFiles.Count -eq 0) {
+    Write-ColorOutput "All required files are present" "Success"
+} else {
+    Write-ColorOutput "Warning: Some files are missing - installation may be incomplete" "Warning"
+}
+
 # Final configuration
 Write-ColorOutput ""
 Write-ColorOutput "Final configuration..." "Info"
@@ -287,7 +405,17 @@ if (Test-Path $configPath) {
     $configContent | Out-File $configPath -Encoding UTF8
     
     Write-ColorOutput "Configuration updated successfully" "Success"
+} else {
+    Write-ColorOutput "Configuration file not found - repository may not have downloaded correctly" "Warning"
 }
+
+# Setup startup options if requested
+Write-ColorOutput ""
+Write-ColorOutput "Startup configuration..." "Info"
+Write-ColorOutput "You can configure startup options using:" "Info"
+Write-ColorOutput "  1. Run: python Scripts\ini_editor.py" "Info"
+Write-ColorOutput "  2. Or use: python Scripts\startup_manager.py --help" "Info"
+Write-ColorOutput "  3. Or double-click: Scripts\manage_startup.bat" "Info"
 
 Write-ColorOutput ""
 Write-ColorOutput "SilentWitness setup completed!" "Success"
@@ -297,6 +425,12 @@ Write-ColorOutput "To start using SilentWitness:" "Info"
 Write-ColorOutput "   1. cd $TOOLS_DIR\Scripts" "Info"
 Write-ColorOutput "   2. python ffmpeg_auto_recorder.py" "Info"
 Write-ColorOutput ""
+Write-ColorOutput "What was installed:" "Info"
+Write-ColorOutput "   ✓ FFmpeg for video recording" "Success"
+Write-ColorOutput "   ✓ Python 3.12 with all dependencies" "Success"
+Write-ColorOutput "   ✓ SilentWitness application files" "Success"
+Write-ColorOutput "   ✓ Configuration and documentation" "Success"
+Write-ColorOutput ""
 Write-ColorOutput "See README.md for complete usage instructions" "Info"
 Write-ColorOutput ""
-Write-ColorOutput "Note: Ensure all paths in config.ini are correct for your system" "Warning"
+Write-ColorOutput "Note: All files are now in $TOOLS_DIR - no need to clone the repository!" "Info"

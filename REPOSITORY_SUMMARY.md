@@ -59,6 +59,12 @@ silentwitness/
 irm https://raw.githubusercontent.com/GoblinRules/silentwitness/main/install_silentwitness.ps1 | iex
 ```
 
+**What this does:**
+- Downloads the complete SilentWitness repository
+- Installs FFmpeg and Python 3.12
+- Installs all Python dependencies
+- Creates a fully functional installation
+
 ### **Option 2: Traditional Setup**
 ```bash
 git clone https://github.com/yourusername/silentwitness.git
@@ -73,6 +79,7 @@ cd silentwitness
 - ✅ **Visual setup guides**
 - ✅ **Multiple installation methods**
 - ✅ **GitHub-ready organization**
+- ✅ **Rich visual documentation** - 8 application screenshots integrated into README
 
 ## ❌ **What This Repository Excludes**
 - ❌ **Large binary files** (FFmpeg, Python)

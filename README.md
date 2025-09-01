@@ -24,6 +24,35 @@ A comprehensive Windows-based suite for automated screen recording and keystroke
    python keylogger.py
    ```
 
+## 📸 **Application Screenshots**
+
+### **Main Interface**
+![Recorder Monitor Status Page](User%20Guide/Screens/Recorder%20Monitor%20Status%20Page.png)
+*Main monitoring interface showing recording status and controls*
+
+### **Configuration Options**
+![Recording Configuration](User%20Guide/Screens/Recorder%20Config_Recording.png)
+*Recording settings and parameters configuration*
+
+![Tray Configuration](User%20Guide/Screens/Recorder%20Config_Tray.png)
+*System tray icon and notification settings*
+
+![Logging Configuration](User%20Guide/Screens/Recorder%20Config_Logging.png)
+*Logging preferences and output settings*
+
+![Paths Configuration](User%20Guide/Screens/Recorder%20Config_Paths.png)
+*File paths and directory configuration*
+
+### **System Integration**
+![Tray Icon](User%20Guide/Screens/Tray%20Icon.png)
+*System tray icon with status indicators*
+
+![Recordings Page](User%20Guide/Screens/Recorder%20Monitor%20Recordings%20Page.png)
+*Recorded video files management and playback*
+
+![Terminal View](User%20Guide/Screens/Recorder%20Monitor%20Status%20Page_Terminal.png)
+*Command-line interface for advanced users*
+
 ## 📁 Project Structure
 
 ```
@@ -33,6 +62,8 @@ C:\Tools\SilentWitness\
 │   ├── recorder_status_gui.py
 │   ├── keylogger.py
 │   ├── ini_editor.py
+│   ├── startup_manager.py
+│   ├── manage_startup.bat
 │   └── config.ini
 ├── ffmpeg\                  # FFmpeg distribution (downloaded by setup)
 ├── Python\                  # Portable Python environment (downloaded by setup)
@@ -42,7 +73,7 @@ C:\Tools\SilentWitness\
 │   └── Recorder\
 └── User Guide\              # Documentation
     ├── User_Manual_Keylogger_Recorder.md
-    └── Screens\             # Application screenshots
+    └── Screens\             # Application screenshots (8 interface images)
 ```
 
 ## ⚙️ Configuration
@@ -52,11 +83,27 @@ Edit `Scripts\config.ini` to customize:
 - Idle detection thresholds
 - Logging preferences
 - Tray icon settings
+- **Startup options** - Start Menu shortcuts and auto-start configuration
+
+### **Startup Management**
+SilentWitness includes powerful startup management features:
+
+- **Start Menu Integration** - Add shortcuts to Windows Start Menu Programs
+- **Auto-Start Options** - Configure applications to start automatically on login
+- **Selective Startup** - Choose which components start automatically
+- **User-Specific Setup** - Configure startup for specific users
+
+**Configure via:**
+- **GUI**: `python Scripts\ini_editor.py` (recommended)
+- **Command Line**: `python Scripts\startup_manager.py --help`
+- **Quick Access**: Double-click `Scripts\manage_startup.bat`
 
 ## 📚 Documentation
 
 - **[User Manual](User%20Guide/User_Manual_Keylogger_Recorder.md)** - Complete setup and usage guide
 - **[Build Instructions](User%20Guide/User_Manual_Keylogger_Recorder.md#-build-instructions)** - How to set up the portable environment
+- **📸 [Application Screenshots](#-application-screenshots)** - Visual guide to all features and interfaces
+- **🎯 [Features](#-features)** - Detailed feature overview with emojis
 
 ## 🔧 Dependencies
 
@@ -75,6 +122,9 @@ irm https://raw.githubusercontent.com/GoblinRules/silentwitness/main/install_sil
 **What happens:**
 - Downloads setup script directly from GitHub
 - Executes it automatically
+- Downloads and extracts the complete SilentWitness repository
+- Downloads and installs FFmpeg and Python 3.12
+- Installs all Python dependencies
 - Sets up everything in `C:\Tools\SilentWitness\`
 - No need to clone or download anything manually!
 
@@ -111,11 +161,13 @@ irm https://raw.githubusercontent.com/GoblinRules/silentwitness/main/install_sil
 
 ## 🎯 Features
 
-- **Automated Screen Recording** - Start/stop based on user activity
-- **Keystroke Logging** - Natural text capture with timestamps
-- **GUI Management** - Visual control and monitoring interface
-- **System Tray Integration** - Background operation with status indicators
-- **Configurable Settings** - Easy customization via INI files
+- **🎥 Automated Screen Recording** - Start/stop based on user activity with visual status monitoring
+- **⌨️ Keystroke Logging** - Natural text capture with timestamps and log management
+- **🖥️ GUI Management** - Visual control and monitoring interface (see screenshots above)
+- **🔔 System Tray Integration** - Background operation with status indicators and notifications
+- **⚙️ Configurable Settings** - Easy customization via INI files and GUI editor
+- **📊 Real-time Monitoring** - Live status updates and recording statistics
+- **📁 File Management** - Organized recording storage and playback capabilities
 
 ## 📄 License
 

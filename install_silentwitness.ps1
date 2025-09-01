@@ -4,6 +4,12 @@
 Write-Host "SilentWitness One-Click Installer" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
+Write-Host "This installer will download and set up SilentWitness completely:" -ForegroundColor White
+Write-Host "  - Download the full SilentWitness application" -ForegroundColor Gray
+Write-Host "  - Download and install FFmpeg for video recording" -ForegroundColor Gray
+Write-Host "  - Download and install Python 3.12 with all dependencies" -ForegroundColor Gray
+Write-Host "  - Configure everything automatically" -ForegroundColor Gray
+Write-Host ""
 
 # Download and execute the main setup script
 $setupScriptUrl = "https://raw.githubusercontent.com/GoblinRules/silentwitness/main/setup_silentwitness.ps1"
@@ -24,4 +30,5 @@ try {
     Write-Host "   Error: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host ""
     Write-Host "Alternative: Clone the repository and run setup_silentwitness.bat" -ForegroundColor Yellow
+    Write-Host "   Or check your internet connection and try again" -ForegroundColor Yellow
 }

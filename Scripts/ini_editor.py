@@ -1,11 +1,11 @@
 import sys
-sys.path.append(r"C:\Tools\OBS\Python\Lib\site-packages")
+sys.path.append(r"C:\Tools\SilentWitness\Python\Lib\site-packages")
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 import configparser
 import os
 
-INI_FILE = "C:/Tools/OBS/Scripts/config.ini"
+INI_FILE = "C:/Tools/SilentWitness/Scripts/config.ini"
 
 DEFAULTS = {
     "Paths": {
@@ -35,6 +35,15 @@ DEFAULTS = {
         "icon_recording": "",
         "tooltip_idle": "Not Recording",
         "tooltip_recording": "Recording..."
+    },
+    "Startup": {
+        "enable_startup_menu": "false",
+        "enable_auto_start": "false",
+        "startup_user": "%USERNAME%",
+        "startup_delay": "10",
+        "startup_recorder": "true",
+        "startup_status_gui": "false",
+        "startup_config_gui": "false"
     }
 }
 
@@ -58,7 +67,14 @@ TOOLTIPS = {
     "icon_idle": "Icon path when idle (not recording)",
     "icon_recording": "Icon path when recording",
     "tooltip_idle": "Tooltip text when idle",
-    "tooltip_recording": "Tooltip text when recording"
+    "tooltip_recording": "Tooltip text when recording",
+    "enable_startup_menu": "Add SilentWitness shortcuts to Start Menu Programs",
+    "enable_auto_start": "Add SilentWitness shortcuts to user startup folder (auto-start on login)",
+    "startup_user": "Username for startup shortcuts (use %USERNAME% for current user)",
+    "startup_delay": "Delay in seconds before starting applications on login",
+    "startup_recorder": "Include main recorder in startup shortcuts",
+    "startup_status_gui": "Include status GUI in startup shortcuts",
+    "startup_config_gui": "Include configuration GUI in startup shortcuts"
 }
 
 class INIEditorApp(tk.Tk):
@@ -123,6 +139,18 @@ class INIEditorApp(tk.Tk):
         bottom.pack(pady=5)
         ttk.Button(bottom, text="Save Changes", command=self.save_ini).pack(side="left", padx=5)
         ttk.Button(bottom, text="Reset to Defaults", command=self.reset_defaults).pack(side="left", padx=5)
+        
+        # Add startup management buttons
+        startup_frame = ttk.LabelFrame(self, text="Startup Management")
+        startup_frame.pack(fill="x", padx=10, pady=5)
+        
+        startup_buttons = ttk.Frame(startup_frame)
+        startup_buttons.pack(pady=5)
+        
+        ttk.Button(startup_buttons, text="Apply Startup Config", 
+                  command=self.apply_startup_config).pack(side="left", padx=5)
+        ttk.Button(startup_buttons, text="Show Startup Status", 
+                  command=self.show_startup_status).pack(side="left", padx=5)
 
     def _add_tooltip(self, widget, text):
         def on_enter(event):
@@ -175,6 +203,49 @@ class INIEditorApp(tk.Tk):
         with open(INI_FILE, "w") as f:
             self.config_parser.write(f)
         messagebox.showinfo("INI Saved", "Configuration saved successfully.")
+    
+    def apply_startup_config(self):
+        """Apply the startup configuration using the startup manager"""
+        try:
+            # Import and use the startup manager
+            from startup_manager import StartupManager
+            
+            manager = StartupManager(INI_FILE)
+            if manager.apply_startup_config():
+                messagebox.showinfo("Startup Config Applied", 
+                                 "Startup configuration applied successfully!\n\n"
+                                 "Check Start Menu and user startup folder for changes.")
+            else:
+                messagebox.showerror("Startup Config Error", 
+                                   "Failed to apply startup configuration.\n"
+                                   "Check the console for error details.")
+        except ImportError:
+            messagebox.showerror("Startup Manager Error", 
+                               "Startup manager not found.\n"
+                               "Make sure startup_manager.py is in the same directory.")
+        except Exception as e:
+            messagebox.showerror("Startup Config Error", f"Error: {str(e)}")
+    
+    def show_startup_status(self):
+        """Show current startup configuration status"""
+        try:
+            # Import and use the startup manager
+            from startup_manager import StartupManager
+            
+            manager = StartupManager(INI_FILE)
+            status = manager.get_startup_status()
+            
+            status_text = "Startup Configuration Status:\n\n"
+            for key, value in status.items():
+                status_text += f"{key}: {value}\n"
+            
+            messagebox.showinfo("Startup Status", status_text)
+        except ImportError:
+            messagebox.showerror("Startup Manager Error", 
+                               "Startup manager not found.\n"
+                               "Make sure startup_manager.py is in the same directory.")
+        except Exception as e:
+            messagebox.showerror("Startup Status Error", f"Error: {str(e)}")
 
 if __name__ == "__main__":
     app = INIEditorApp()
