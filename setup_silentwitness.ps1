@@ -357,59 +357,10 @@ if (!$SkipFFmpeg) {
     Write-ColorOutput "Skipping FFmpeg setup" "Warning"
 }
 
-# Check for system Python first
-Write-ColorOutput ""
-Write-ColorOutput "Checking Python availability..." "Info"
-
-$useSystemPython = $false
-$useEmbeddedPython = $false
-
-# Try to find system Python
-try {
-    $pythonExe = Get-Command python -ErrorAction SilentlyContinue
-    if ($pythonExe) {
-        $pythonPath = $pythonExe.Source
-        Write-ColorOutput "Found system Python: $pythonPath" "Info"
-        
-        # Test if it has tkinter (required for GUI)
-        $tkinterTest = & python -c "import tkinter; print('tkinter available')" 2>$null
-        if ($tkinterTest -eq "tkinter available") {
-            Write-ColorOutput "System Python has tkinter support - using system Python" "Success"
-            $useSystemPython = $true
-            
-            # Install dependencies for system Python
-            Write-ColorOutput "Installing Python dependencies using system Python..." "Info"
-            $packages = @("psutil", "pynput", "pyperclip", "pystray", "pillow", "pyautogui", "pymsgbox", "pygetwindow", "pytweening", "pyscreeze", "pyrect", "pywin32", "mouse", "screeninfo", "pygame", "configparser")
-            foreach ($package in $packages) {
-                Write-ColorOutput "   Installing $package..." "Info"
-                & python -m pip install $package --user 2>$null
-                if ($LASTEXITCODE -eq 0) {
-                    Write-ColorOutput "     $package installed" "Success"
-                } else {
-                    Write-ColorOutput "     Warning: $package had issues" "Warning"
-                }
-            }
-            Write-ColorOutput "System Python setup completed successfully" "Success"
-        } else {
-            Write-ColorOutput "System Python found but missing tkinter - will use embedded Python" "Warning"
-            $useEmbeddedPython = $true
-        }
-    } else {
-        Write-ColorOutput "No system Python found - will use embedded Python" "Warning"
-        $useEmbeddedPython = $true
-    }
-}
-catch {
-    Write-ColorOutput "Error checking system Python: $($_.Exception.Message)" "Warning"
-    Write-ColorOutput "Will use embedded Python" "Warning"
-    $useEmbeddedPython = $true
-}
-
-# Download and setup embedded Python only if needed
-if ($useEmbeddedPython -and !$SkipPython) {
+# Download and setup embedded Python
+if (!$SkipPython) {
     Write-ColorOutput ""
     Write-ColorOutput "Setting up embedded Python..." "Info"
-    Write-ColorOutput "Installing tkinter-embed for GUI support..." "Info"
     
     $pythonZip = Join-Path $TOOLS_DIR "python-3.12.0-embed-amd64.zip"
     
@@ -424,10 +375,9 @@ if ($useEmbeddedPython -and !$SkipPython) {
             }
             
             Write-ColorOutput "Embedded Python setup completed successfully" "Success"
-            Write-ColorOutput "GUI applications (ini_editor.py, recorder_status_gui.py) should now work" "Success"
         }
     }
-} elseif ($SkipPython) {
+} else {
     Write-ColorOutput "Skipping Python setup" "Warning"
 }
 
@@ -509,11 +459,7 @@ Write-ColorOutput "   2. python ffmpeg_auto_recorder.py" "Info"
 Write-ColorOutput ""
 Write-ColorOutput "What was installed:" "Info"
 Write-ColorOutput "   FFmpeg for video recording" "Success"
-if ($useSystemPython) {
-    Write-ColorOutput "   System Python with tkinter support" "Success"
-} else {
-    Write-ColorOutput "   Embedded Python 3.12 with tkinter support" "Success"
-}
+Write-ColorOutput "   Embedded Python 3.12 with tkinter support" "Success"
 Write-ColorOutput "   SilentWitness application files" "Success"
 Write-ColorOutput "   Configuration and documentation" "Success"
 Write-ColorOutput ""
