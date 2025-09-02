@@ -189,11 +189,9 @@ function Install-PythonDependencies {
             & "$PythonPath\python.exe" $pipPath --no-warn-script-location --quiet
             
             # Install tkinter-embed FIRST (provides tkinter for embedded Python)
-            Write-ColorOutput "   Installing setuptools..." "Info"
-            & "$PythonPath\python.exe" -m pip install setuptools --target "$PythonPath" --no-warn-script-location --quiet
-            
             Write-ColorOutput "   Installing tkinter-embed (provides tkinter support)..." "Info"
-            & "$PythonPath\python.exe" -m pip install tkinter-embed --target "$PythonPath" --no-warn-script-location --quiet
+            & "$PythonPath\python.exe" -m pip install setuptools --no-warn-script-location --quiet
+            & "$PythonPath\python.exe" -m pip install tkinter-embed --no-warn-script-location --quiet
             
             # Install required packages
             $requirements = @(
@@ -223,7 +221,7 @@ function Install-PythonDependencies {
                 Write-ColorOutput "   Installing package $currentPackage of $totalPackages - $package" "Info"
                 
                 # Show pip progress
-                $pipOutput = & "$PythonPath\python.exe" -m pip install $package --target "$PythonPath" --no-warn-script-location --quiet 2>&1
+                $pipOutput = & "$PythonPath\python.exe" -m pip install $package --no-warn-script-location --quiet 2>&1
                 if ($LASTEXITCODE -eq 0) {
                     Write-ColorOutput "     $package installed" "Success"
                 } else {
@@ -377,7 +375,7 @@ if (!$SkipPython) {
             Write-ColorOutput "Embedded Python setup completed successfully" "Success"
         }
     }
-} else {
+} elseif ($SkipPython) {
     Write-ColorOutput "Skipping Python setup" "Warning"
 }
 
