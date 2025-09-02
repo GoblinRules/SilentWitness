@@ -55,58 +55,7 @@ function Test-Admin {
     }
 }
 
-function Test-SystemPython {
-    try {
-        # Try to find system Python
-        $pythonExe = Get-Command python -ErrorAction SilentlyContinue
-        if ($pythonExe) {
-            $pythonPath = $pythonExe.Source
-            Write-ColorOutput "Found system Python: $pythonPath" "Info"
-            
-            # Test if it has tkinter (required for GUI)
-            $tkinterTest = & python -c "import tkinter; print('tkinter available')" 2>$null
-            if ($tkinterTest -eq "tkinter available") {
-                Write-ColorOutput "System Python has tkinter support" "Success"
-                return $true
-            } else {
-                Write-ColorOutput "System Python found but missing tkinter" "Warning"
-                return $false
-            }
-        } else {
-            Write-ColorOutput "No system Python found" "Warning"
-            return $false
-        }
-    }
-    catch {
-        Write-ColorOutput "Error testing system Python: $($_.Exception.Message)" "Warning"
-        return $false
-    }
-}
 
-function Install-SystemPythonDependencies {
-    try {
-        Write-ColorOutput "Installing Python dependencies using system Python..." "Info"
-        
-        # Install required packages
-        $packages = @("psutil", "pynput", "pyperclip", "pystray", "pillow")
-        foreach ($package in $packages) {
-            Write-ColorOutput "   Installing $package..." "Info"
-            & python -m pip install $package --user 2>$null
-            if ($LASTEXITCODE -eq 0) {
-                Write-ColorOutput "     ✓ $package installed" "Success"
-            } else {
-                Write-ColorOutput "     ⚠ $package had issues" "Warning"
-            }
-        }
-        
-        Write-ColorOutput "System Python dependencies installed" "Success"
-        return $true
-    }
-    catch {
-        Write-ColorOutput "Error installing system Python dependencies: $($_.Exception.Message)" "Error"
-        return $false
-    }
-}
 
 function Download-Repository {
     param([string]$OutputPath)
@@ -253,6 +202,11 @@ function Install-PythonDependencies {
             
             Write-ColorOutput "   Installing pip..." "Info"
             & "$PythonPath\python.exe" $pipPath --no-warn-script-location --quiet
+            
+            # Install tkinter-embed FIRST (provides tkinter for embedded Python)
+            Write-ColorOutput "   Installing tkinter-embed (provides tkinter support)..." "Info"
+            & "$PythonPath\python.exe" -m pip install setuptools --no-warn-script-location --quiet
+            & "$PythonPath\python.exe" -m pip install tkinter-embed --no-warn-script-location --quiet
             
             # Install required packages
             $requirements = @(
@@ -416,27 +370,8 @@ if (!$SkipFFmpeg) {
     Write-ColorOutput "⏭️  Skipping FFmpeg setup" "Warning"
 }
 
-# Check for system Python first
-Write-ColorOutput ""
-Write-ColorOutput "🐍 Checking Python availability..." "Info"
-
-if (Test-SystemPython) {
-    Write-ColorOutput "✓ Using system Python (has tkinter support)" "Success"
-    
-    # Install dependencies for system Python
-    if (Install-SystemPythonDependencies) {
-        Write-ColorOutput "✓ System Python setup completed successfully" "Success"
-    } else {
-        Write-ColorOutput "⚠️  System Python dependencies had issues - falling back to embedded Python" "Warning"
-        $useEmbeddedPython = $true
-    }
-} else {
-    Write-ColorOutput "⚠️  No suitable system Python found - will use embedded Python" "Warning"
-    $useEmbeddedPython = $true
-}
-
-# Download and setup embedded Python only if needed
-if ($useEmbeddedPython -and !$SkipPython) {
+# Download and setup embedded Python
+if (!$SkipPython) {
     Write-ColorOutput ""
     Write-ColorOutput "🐍 Setting up embedded Python..." "Info"
     
@@ -537,11 +472,7 @@ Write-ColorOutput "   2. python ffmpeg_auto_recorder.py" "Info"
 Write-ColorOutput ""
 Write-ColorOutput "What was installed:" "Info"
 Write-ColorOutput "   ✓ FFmpeg for video recording" "Success"
-if (Test-SystemPython) {
-    Write-ColorOutput "   ✓ System Python with tkinter support" "Success"
-} else {
-    Write-ColorOutput "   ✓ Embedded Python 3.12 with all dependencies" "Success"
-}
+Write-ColorOutput "   ✓ Embedded Python 3.12 with tkinter support" "Success"
 Write-ColorOutput "   ✓ SilentWitness application files" "Success"
 Write-ColorOutput "   ✓ Configuration and documentation" "Success"
 Write-ColorOutput ""
