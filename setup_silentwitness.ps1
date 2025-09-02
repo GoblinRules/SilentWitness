@@ -136,38 +136,23 @@ function Download-File {
     param([string]$Url, [string]$OutputPath, [string]$Description)
     
     try {
-        Write-ColorOutput "📥 Downloading $Description..." "Info"
+        Write-ColorOutput "Downloading $Description..." "Info"
         Write-ColorOutput "   URL: $Url" "Info"
         
-        # Show download progress
-        $progressParams = @{
-            Uri = $Url
-            OutFile = $OutputPath
-            UseBasicParsing = $true
-            ProgressAction = {
-                $percentComplete = $_.PercentComplete
-                if ($percentComplete -ge 0) {
-                    Write-Progress -Activity "Downloading $Description" -Status "$percentComplete% Complete" -PercentComplete $percentComplete
-                }
-            }
-        }
-        
-        Invoke-RestMethod @progressParams
-        
-        # Clear progress bar
-        Write-Progress -Activity "Downloading $Description" -Completed
+        # Download file
+        Invoke-RestMethod -Uri $Url -OutFile $OutputPath -UseBasicParsing
         
         if (Test-Path $OutputPath) {
             $fileSize = [math]::Round((Get-Item $OutputPath).Length / 1MB, 2)
-            Write-ColorOutput "✓ Downloaded $Description successfully ($fileSize MB)" "Success"
+            Write-ColorOutput "Downloaded $Description successfully ($fileSize MB)" "Success"
             return $true
         } else {
-            Write-ColorOutput "✗ Failed to download $Description" "Error"
+            Write-ColorOutput "Failed to download $Description" "Error"
             return $false
         }
     }
     catch {
-        Write-ColorOutput "✗ Error downloading $Description`: $($_.Exception.Message)" "Error"
+        Write-ColorOutput "Error downloading $Description - $($_.Exception.Message)" "Error"
         return $false
     }
 }
@@ -181,11 +166,11 @@ function Extract-Archive {
         # Use Expand-Archive for better compatibility
         Expand-Archive -Path $ArchivePath -DestinationPath $Destination -Force
         
-        Write-ColorOutput "✓ Extracted $Description successfully" "Success"
+        Write-ColorOutput "Extracted $Description successfully" "Success"
         return $true
     }
     catch {
-        Write-ColorOutput "✗ Error extracting $Description`: $($_.Exception.Message)" "Error"
+        Write-ColorOutput "Error extracting $Description - $($_.Exception.Message)" "Error"
         return $false
     }
 }
@@ -194,7 +179,7 @@ function Install-PythonDependencies {
     param([string]$PythonPath)
     
     try {
-        Write-ColorOutput "🐍 Installing Python dependencies..." "Info"
+        Write-ColorOutput "Installing Python dependencies..." "Info"
         
         # Download get-pip.py
         $pipPath = Join-Path $TOOLS_DIR "get-pip.py"
@@ -238,18 +223,18 @@ function Install-PythonDependencies {
                 # Show pip progress
                 $pipOutput = & "$PythonPath\python.exe" -m pip install $package --no-warn-script-location --quiet 2>&1
                 if ($LASTEXITCODE -eq 0) {
-                    Write-ColorOutput "     ✓ $package installed" "Success"
+                    Write-ColorOutput "     $package installed" "Success"
                 } else {
                     Write-ColorOutput "     Warning: $package had issues" "Warning"
                 }
             }
             
-            Write-ColorOutput "✓ Python dependencies installation completed" "Success"
+            Write-ColorOutput "Python dependencies installation completed" "Success"
             return $true
         }
     }
     catch {
-        Write-ColorOutput "✗ Error installing Python dependencies: $($_.Exception.Message)" "Error"
+        Write-ColorOutput "Error installing Python dependencies: $($_.Exception.Message)" "Error"
         return $false
     }
 }
@@ -273,22 +258,22 @@ Lib\site-packages
         $pthPath = Join-Path $PythonPath "python312._pth"
         $pthContent | Out-File -FilePath $pthPath -Encoding ASCII
         
-        Write-ColorOutput "✓ Python path configured successfully" "Success"
+        Write-ColorOutput "Python path configured successfully" "Success"
         return $true
     }
     catch {
-        Write-ColorOutput "✗ Error configuring Python path: $($_.Exception.Message)" "Error"
+        Write-ColorOutput "Error configuring Python path: $($_.Exception.Message)" "Error"
         return $false
     }
 }
 
 # Main execution
-Write-ColorOutput "🎥 SilentWitness Setup Script" "Info"
+Write-ColorOutput "SilentWitness Setup Script" "Info"
 Write-ColorOutput "================================" "Info"
 
 # Check if running as administrator
 if (!(Test-Admin)) {
-    Write-ColorOutput "⚠️  Warning: Not running as administrator. Some operations may fail." "Warning"
+    Write-ColorOutput "Warning: Not running as administrator. Some operations may fail." "Warning"
     Write-ColorOutput "   Consider running PowerShell as Administrator for best results." "Warning"
     Write-ColorOutput ""
 }
@@ -348,7 +333,7 @@ Create-Directory "$TOOLS_DIR\Logs"
 # Download and setup FFmpeg
 if (!$SkipFFmpeg) {
     Write-ColorOutput ""
-    Write-ColorOutput "📹 Setting up FFmpeg..." "Info"
+    Write-ColorOutput "Setting up FFmpeg..." "Info"
     
     $ffmpegZip = Join-Path $TOOLS_DIR "ffmpeg-release-essentials.zip"
     
@@ -363,17 +348,17 @@ if (!$SkipFFmpeg) {
             
             # Clean up zip file
             Remove-Item $ffmpegZip -Force
-            Write-ColorOutput "✓ FFmpeg setup completed successfully" "Success"
+            Write-ColorOutput "FFmpeg setup completed successfully" "Success"
         }
     }
 } else {
-    Write-ColorOutput "⏭️  Skipping FFmpeg setup" "Warning"
+    Write-ColorOutput "Skipping FFmpeg setup" "Warning"
 }
 
 # Download and setup embedded Python
 if (!$SkipPython) {
     Write-ColorOutput ""
-    Write-ColorOutput "🐍 Setting up embedded Python..." "Info"
+    Write-ColorOutput "Setting up embedded Python..." "Info"
     
     $pythonZip = Join-Path $TOOLS_DIR "python-3.12.0-embed-amd64.zip"
     
@@ -387,11 +372,11 @@ if (!$SkipPython) {
                 Install-PythonDependencies "$TOOLS_DIR\Python"
             }
             
-            Write-ColorOutput "✓ Embedded Python setup completed successfully" "Success"
+            Write-ColorOutput "Embedded Python setup completed successfully" "Success"
         }
     }
 } elseif ($SkipPython) {
-    Write-ColorOutput "⏭️  Skipping Python setup" "Warning"
+    Write-ColorOutput "Skipping Python setup" "Warning"
 }
 
 # Verify repository content
@@ -410,9 +395,9 @@ $missingFiles = @()
 foreach ($file in $requiredFiles) {
     $filePath = Join-Path $TOOLS_DIR $file
     if (Test-Path $filePath) {
-        Write-ColorOutput "   ✓ $file" "Success"
+        Write-ColorOutput "   $file" "Success"
     } else {
-        Write-ColorOutput "   ✗ $file (missing)" "Error"
+        Write-ColorOutput "   $file (missing)" "Error"
         $missingFiles += $file
     }
 }
@@ -429,15 +414,15 @@ Write-ColorOutput "Final directory structure:" "Info"
 Get-ChildItem $TOOLS_DIR | ForEach-Object {
     if ($_.PSIsContainer) {
         $itemCount = (Get-ChildItem $_.FullName -Recurse | Measure-Object).Count
-        Write-ColorOutput "   📁 $($_.Name) ($itemCount items)" "Success"
+        Write-ColorOutput "   Folder: $($_.Name) ($itemCount items)" "Success"
     } else {
-        Write-ColorOutput "   📄 $($_.Name)" "Success"
+        Write-ColorOutput "   File: $($_.Name)" "Success"
     }
 }
 
 # Final configuration
 Write-ColorOutput ""
-Write-ColorOutput "🔧 Final configuration..." "Info"
+Write-ColorOutput "Final configuration..." "Info"
 
 # Update config.ini paths if it exists
 $configPath = Join-Path $TOOLS_DIR "Scripts\config.ini"
@@ -449,7 +434,7 @@ if (Test-Path $configPath) {
     $configContent = $configContent -replace "C:\\Tools\\OBS", "C:\Tools\SilentWitness"
     $configContent | Out-File $configPath -Encoding UTF8
     
-    Write-ColorOutput "✓ Configuration updated successfully" "Success"
+    Write-ColorOutput "Configuration updated successfully" "Success"
 } else {
     Write-ColorOutput "Configuration file not found - repository may not have downloaded correctly" "Warning"
 }
@@ -463,31 +448,31 @@ Write-ColorOutput "  2. Or use: python Scripts\startup_manager.py --help" "Info"
 Write-ColorOutput "  3. Or double-click: Scripts\manage_startup.bat" "Info"
 
 Write-ColorOutput ""
-Write-ColorOutput "🎉 SilentWitness setup completed!" "Success"
+Write-ColorOutput "SilentWitness setup completed!" "Success"
 Write-ColorOutput ""
-Write-ColorOutput "📁 Installation directory: $TOOLS_DIR" "Info"
-Write-ColorOutput "🚀 To start using SilentWitness:" "Info"
+Write-ColorOutput "Installation directory: $TOOLS_DIR" "Info"
+Write-ColorOutput "To start using SilentWitness:" "Info"
 Write-ColorOutput "   1. cd $TOOLS_DIR\Scripts" "Info"
 Write-ColorOutput "   2. python ffmpeg_auto_recorder.py" "Info"
 Write-ColorOutput ""
 Write-ColorOutput "What was installed:" "Info"
-Write-ColorOutput "   ✓ FFmpeg for video recording" "Success"
-Write-ColorOutput "   ✓ Embedded Python 3.12 with tkinter support" "Success"
-Write-ColorOutput "   ✓ SilentWitness application files" "Success"
-Write-ColorOutput "   ✓ Configuration and documentation" "Success"
+Write-ColorOutput "   FFmpeg for video recording" "Success"
+Write-ColorOutput "   Embedded Python 3.12 with tkinter support" "Success"
+Write-ColorOutput "   SilentWitness application files" "Success"
+Write-ColorOutput "   Configuration and documentation" "Success"
 Write-ColorOutput ""
-Write-ColorOutput "📚 See README.md for complete usage instructions" "Info"
+Write-ColorOutput "See README.md for complete usage instructions" "Info"
 Write-ColorOutput ""
 Write-ColorOutput "Note: All files are now in $TOOLS_DIR - no need to clone the repository!" "Info"
 
 Write-ColorOutput ""
-Write-ColorOutput "🎉 SilentWitness setup completed!" "Success"
+Write-ColorOutput "SilentWitness setup completed!" "Success"
 Write-ColorOutput ""
-Write-ColorOutput "📁 Installation directory: $TOOLS_DIR" "Info"
-Write-ColorOutput "🚀 To start using SilentWitness:" "Info"
+Write-ColorOutput "Installation directory: $TOOLS_DIR" "Info"
+Write-ColorOutput "To start using SilentWitness:" "Info"
 Write-ColorOutput "   1. cd $TOOLS_DIR\Scripts" "Info"
 Write-ColorOutput "   2. python ffmpeg_auto_recorder.py" "Info"
 Write-ColorOutput ""
-Write-ColorOutput "📚 See README.md for complete usage instructions" "Info"
+Write-ColorOutput "See README.md for complete usage instructions" "Info"
 Write-ColorOutput ""
-Write-ColorOutput "⚠️  Note: Ensure all paths in config.ini are correct for your system" "Warning"
+Write-ColorOutput "Note: Ensure all paths in config.ini are correct for your system" "Warning"
