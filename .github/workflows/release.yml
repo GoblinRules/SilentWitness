@@ -10,6 +10,10 @@ jobs:
   build-windows:
     name: Build Windows exe
     runs-on: windows-latest
+    # Needed so softprops/action-gh-release can create/update the GitHub
+    # Release on tag pushes. Default GITHUB_TOKEN perms are read-only.
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: rust
