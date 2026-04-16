@@ -66,3 +66,9 @@ keylog_output.txt
 get-pip.py
 ffmpeg-release-essentials.zip
 python-3.12.0-embed-amd64.zip
+
+# Rust build artifacts
+/rust/target/
+/rust/dist/
+/rust/Cargo.lock.bak
+/rust/silentwitness-*.zip
