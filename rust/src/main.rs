@@ -135,6 +135,8 @@ fn run_tray_event_loop(
 
     let stop = Arc::new(AtomicBool::new(false));
     let exe = std::env::current_exe()?;
+    // Null HWND tells PeekMessageW to pull messages for any window on the
+    // current thread — exactly what tray-icon needs.
     let null_hwnd: HWND = HWND(std::ptr::null_mut());
 
     loop {
@@ -146,7 +148,7 @@ fn run_tray_event_loop(
         // Pump Windows messages for the tray.
         unsafe {
             let mut msg = MSG::default();
-            while PeekMessageW(&mut msg, Some(null_hwnd), 0, 0, PM_REMOVE).as_bool() {
+            while PeekMessageW(&mut msg, null_hwnd, 0, 0, PM_REMOVE).as_bool() {
                 let _ = TranslateMessage(&msg);
                 DispatchMessageW(&msg);
             }
