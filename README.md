@@ -1,184 +1,99 @@
-# 🎥 SilentWitness Screen Recording & Keylogging Suite
+# SilentWitness
 
 [![License: Non-Commercial](https://img.shields.io/badge/License-Non--Commercial-red.svg)](LICENSE.md)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-blue.svg)](https://www.microsoft.com/windows)
-[![Python: 3.12+](https://img.shields.io/badge/Python-3.12+-green.svg)](https://www.python.org/)
+[![Built with: Rust](https://img.shields.io/badge/Built%20with-Rust-orange.svg)](https://www.rust-lang.org/)
 
-A comprehensive Windows-based suite for automated screen recording and keystroke logging using FFmpeg and Python.
+A Windows screen-recording and keystroke-logging suite for consensual
+monitoring (self-auditing, documented testing, supervised devices).
 
-## 🚀 Quick Start
+> **v0.2 rewrite — Rust, single self-contained `.exe`.** The previous Python
+> 3.12 + portable-Python + PyInstaller stack has been replaced with a native
+> Rust application. The legacy Python code is preserved under [`legacy/`](legacy/)
+> for reference; all new work lives in [`rust/`](rust/).
 
-1. **Run the main recorder:**
-   ```cmd
-   cd Scripts
-   python ffmpeg_auto_recorder.py
+---
+
+## Quick start
+
+1. Download `silentwitness.exe` from the
+   [Releases](https://github.com/goblinrules/silentwitness/releases) page,
+   **or** build it yourself (see below).
+2. Place `ffmpeg.exe` and `ffprobe.exe` on your PATH, or drop them at
+   `ffmpeg\bin\ffmpeg.exe` next to `silentwitness.exe`.
+3. Run it:
+   ```powershell
+   .\silentwitness.exe            # tray + recorder
+   .\silentwitness.exe monitor    # open the recordings/status window
+   .\silentwitness.exe config     # graphical config editor
+   .\silentwitness.exe doctor     # verify install
    ```
 
-2. **Open the status GUI:**
-   ```cmd
-   python recorder_status_gui.py
-   ```
+The first run writes a default `config.toml` to
+`%LOCALAPPDATA%\SilentWitness\config.toml` — edit it via `silentwitness config`
+or by hand.
 
-3. **Start keylogging:**
-   ```cmd
-   python keylogger.py
-   ```
+## Features
 
-## 📸 **Application Screenshots**
+- **Single self-contained `.exe`** — no Python, no installer, no virtualenv.
+- **Always-visible tray icon** that changes colour while recording.
+- **Modern `egui` GUI** — DPI-aware status monitor with a live recordings
+  list, and a schema-validated config editor.
+- **Automatic start / stop** based on `GetLastInputInfo` idle time.
+- **Optional keystroke logging** alongside video (Ctrl+V paste content is
+  captured; printable/control keys are serialised with timestamps).
+- **Daily-rotated structured logs** via `tracing`.
+- **Start Menu shortcut + HKCU\Run autostart** installer
+  (`silentwitness install --autostart`).
 
-### **Main Interface**
-![Recorder Monitor Status Page](User%20Guide/Screens/Recorder%20Monitor%20Status%20Page.png)
-*Main monitoring interface showing recording status and controls*
+## Screenshots
 
-### **Configuration Options**
-![Recording Configuration](User%20Guide/Screens/Recorder%20Config_Recording.png)
-*Recording settings and parameters configuration*
+Legacy UI screenshots (still representative — same layout, new widgets):
 
-![Tray Configuration](User%20Guide/Screens/Recorder%20Config_Tray.png)
-*System tray icon and notification settings*
+- ![Monitor status](User%20Guide/Screens/Recorder%20Monitor%20Status%20Page.png)
+- ![Config recording tab](User%20Guide/Screens/Recorder%20Config_Recording.png)
+- ![Recordings list](User%20Guide/Screens/Recorder%20Monitor%20Recordings%20Page.png)
 
-![Logging Configuration](User%20Guide/Screens/Recorder%20Config_Logging.png)
-*Logging preferences and output settings*
+## Build from source
 
-![Paths Configuration](User%20Guide/Screens/Recorder%20Config_Paths.png)
-*File paths and directory configuration*
+Requires **Rust 1.78+** and the **MSVC toolchain** on Windows.
 
-### **System Integration**
-![Tray Icon](User%20Guide/Screens/Tray%20Icon.png)
-*System tray icon with status indicators*
-
-![Recordings Page](User%20Guide/Screens/Recorder%20Monitor%20Recordings%20Page.png)
-*Recorded video files management and playback*
-
-![Terminal View](User%20Guide/Screens/Recorder%20Monitor%20Status%20Page_Terminal.png)
-*Command-line interface for advanced users*
-
-## 📁 Project Structure
-
-```
-C:\Tools\SilentWitness\
-├── Scripts\                 # Core Python scripts
-│   ├── ffmpeg_auto_recorder.py
-│   ├── recorder_status_gui.py
-│   ├── keylogger.py
-│   ├── ini_editor.py
-│   ├── startup_manager.py
-│   ├── manage_startup.bat
-│   └── config.ini
-├── ffmpeg\                  # FFmpeg distribution (downloaded by setup)
-├── Python\                  # Portable Python environment (downloaded by setup)
-├── Recordings\              # Output video files (created by setup)
-├── Logs\                    # Application logs (created by setup)
-├── Startup\                 # Windows startup shortcuts
-│   └── Recorder\
-└── User Guide\              # Documentation
-    ├── User_Manual_Keylogger_Recorder.md
-    └── Screens\             # Application screenshots (8 interface images)
-```
-
-## ⚙️ Configuration
-
-Edit `Scripts\config.ini` to customize:
-- Recording paths and formats
-- Idle detection thresholds
-- Logging preferences
-- Tray icon settings
-- **Startup options** - Start Menu shortcuts and auto-start configuration
-
-### **Startup Management**
-SilentWitness includes powerful startup management features:
-
-- **Start Menu Integration** - Add shortcuts to Windows Start Menu Programs
-- **Auto-Start Options** - Configure applications to start automatically on login
-- **Selective Startup** - Choose which components start automatically
-- **User-Specific Setup** - Configure startup for specific users
-
-**Configure via:**
-- **GUI**: `python Scripts\ini_editor.py` (recommended)
-- **Command Line**: `python Scripts\startup_manager.py --help`
-- **Quick Access**: Double-click `Scripts\manage_startup.bat`
-
-## 📚 Documentation
-
-- **[User Manual](User%20Guide/User_Manual_Keylogger_Recorder.md)** - Complete setup and usage guide
-- **[Build Instructions](User%20Guide/User_Manual_Keylogger_Recorder.md#-build-instructions)** - How to set up the portable environment
-- **📸 [Application Screenshots](#-application-screenshots)** - Visual guide to all features and interfaces
-- **🎯 [Features](#-features)** - Detailed feature overview with emojis
-
-## 🔧 Dependencies
-
-- Python 3.12+
-- FFmpeg
-- See `requirements.txt` for Python packages
-
-## 🚀 Quick Setup
-
-### **Option 1: One-Liner Install (Easiest - No Cloning!)**
 ```powershell
-# Run this single command in PowerShell:
-irm https://raw.githubusercontent.com/GoblinRules/silentwitness/main/install_silentwitness.ps1 | iex
+cd rust
+cargo build --release
+# or, for a packaged release including LICENSE and README:
+.\build.ps1 -Zip
 ```
 
-**What happens:**
-- Downloads setup script directly from GitHub
-- Executes it automatically
-- Downloads and extracts the complete SilentWitness repository
-- Downloads and installs FFmpeg and Python 3.12
-- Installs all Python dependencies
-- Sets up everything in `C:\Tools\SilentWitness\`
-- No need to clone or download anything manually!
+The resulting `rust\target\release\silentwitness.exe` is fully self-contained
+(minus the FFmpeg sidecar). CI builds are produced by
+[`.github/workflows/release.yml`](.github/workflows/release.yml) on every tag
+starting with `v`.
 
-### **Option 2: Traditional Setup (Clone First)**
-1. **Download the repository:**
-   ```bash
-   git clone https://github.com/yourusername/silentwitness.git
-   cd silentwitness
-   ```
+## Configuration
 
-2. **Run the setup script:**
-   ```cmd
-   # Double-click setup_silentwitness.bat
-   # OR run from PowerShell:
-   .\setup_silentwitness.ps1
-   ```
+See [`rust/README.md`](rust/README.md#config-configtoml) for the full TOML
+schema. Anything you could set in the old `config.ini` has an equivalent key.
 
-3. **The script will automatically:**
-   - Download FFmpeg from official sources
-   - Download Python 3.12 portable
-   - Install all required Python packages
-   - Configure paths and environment
-   - Create necessary directories
+## Ethics & legal
 
-### **Option 2: Manual Setup**
-1. **Install Python 3.12+**
-2. **Install FFmpeg** from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/)
-3. **Install Python packages:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. **Copy files to `C:\Tools\SilentWitness\`**
-5. **Update paths in `Scripts\config.ini`**
+This tool is **not stealth software** and must not be used as such. Before
+deploying:
 
-## 🎯 Features
+- Only install on devices you own or administer.
+- Notify every user whose keystrokes or screen will be recorded.
+- Comply with local wiretap / privacy / workplace monitoring law.
+- Store recordings on encrypted volumes.
 
-- **🎥 Automated Screen Recording** - Start/stop based on user activity with visual status monitoring
-- **⌨️ Keystroke Logging** - Natural text capture with timestamps and log management
-- **🖥️ GUI Management** - Visual control and monitoring interface (see screenshots above)
-- **🔔 System Tray Integration** - Background operation with status indicators and notifications
-- **⚙️ Configurable Settings** - Easy customization via INI files and GUI editor
-- **📊 Real-time Monitoring** - Live status updates and recording statistics
-- **📁 File Management** - Organized recording storage and playback capabilities
+Contributions that add anti-detection, process-hiding, or silent-install
+features **will be rejected**.
 
-## 📄 License
+## License
 
-This project is licensed under a **Custom Non-Commercial License**. 
+Non-commercial use only — see [LICENSE.md](LICENSE.md).
 
-- ✅ **Personal & Educational Use**: Allowed freely
-- ❌ **Commercial Use**: Requires permission and licensing
-- 📧 **Contact**: [your-email@domain.com] for commercial inquiries
+## Legacy Python version
 
-See [LICENSE.md](LICENSE.md) for full terms and conditions.
-
-## ⚠️ Note
-
-This tool is designed for legitimate monitoring purposes (documentation, debugging, etc.). Ensure compliance with local laws and privacy regulations.
+The original Python suite (portable Python 3.12 + pyinstaller + PowerShell
+setup scripts) lives in [`legacy/`](legacy/). It is no longer maintained but
+remains runnable for anyone mid-migration.
